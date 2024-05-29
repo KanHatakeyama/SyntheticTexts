@@ -35,7 +35,7 @@ ds = load_dataset("hpprc/jawiki-books", split="train")
 
 # %%
 try:
-    ds.shuffle()
+    ds = ds.shuffle()
 except:
     pass
 
@@ -79,14 +79,14 @@ mode_list = list(inst_dict.keys())
 
 
 # %%
-loader = ds
 
 
-def prepare_records(loader, n_records=10):
+def prepare_records(ds, n_records=10):
+    ds = ds.shuffle()
 
     records = []
     cnt = 0
-    for record in loader:
+    for record in ds:
         mode = random.choice(mode_list)
         inst = inst_dict[mode]
         text = record["text"]
@@ -109,7 +109,7 @@ def prepare_records(loader, n_records=10):
 
 # %%
 while True:
-    records = prepare_records(loader, n_records)
+    records = prepare_records(ds, n_records)
     prompts = [record["original_text"] for record in records]
     outputs = llm.generate(
         prompts,
