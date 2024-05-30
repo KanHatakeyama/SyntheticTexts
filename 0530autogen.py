@@ -8,7 +8,7 @@ import os
 from src.generator import inst_dict, prepare_records
 
 # バッチサイズ
-n_records = 500
+n_records = 300
 
 
 os.system("mkdir -p out_data")
@@ -16,24 +16,26 @@ current_time_no_symbols = datetime.now().strftime(
     "%Y-%m-%d %H:%M:%S").replace("-", "").replace(":", "").replace(" ", "")
 out_path = f"out_data/model_{current_time_no_symbols}.jsonl"
 
+ds_list = [
+    # load_dataset("hpprc/jawiki-wiktionary", split="train"),
+    load_dataset("hpprc/jawiki-books", split="train"),
+    load_dataset("hpprc/wikipedia-20240101", split="train"),
+]
+# text と url 列だけを抽出して新しいリストに追加
+ds_list_filtered = [
+    ds.remove_columns(
+        [col for col in ds.column_names if col not in ['text', 'url']])
+    for ds in ds_list
+]
 
+# データセットを結合
+ds = concatenate_datasets(ds_list_filtered)
+# ds = concatenate_datasets(ds_list)
 model_name = "microsoft/Phi-3-medium-128k-instruct"
-model_name = "OrionStarAI/Orion-14B-Chat"
 llm = LLM(model=model_name, trust_remote_code=True,
           max_model_len=20000
           )
 
-# %%
-
-# ds=load_dataset("kanhatakeyama/ChatbotArenaJaMixtral8x22b", split="train")
-# ds = load_dataset("wikipedia", "20220301.en", streaming=False, split="train")
-
-ds_list = [
-    # load_dataset("hpprc/jawiki-wiktionary", split="train"),
-    load_dataset("hpprc/jawiki-books", split="train"),
-]
-
-ds = concatenate_datasets(ds_list)
 
 # %%
 try:
@@ -48,7 +50,7 @@ mode_list = list(inst_dict.keys())
 
 
 # %%
-
+print(len(ds), " records")
 
 # %%
 while True:

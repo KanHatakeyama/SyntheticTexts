@@ -73,18 +73,18 @@ def prepare_records(ds, mode_list,
         if random_extract:
             text = extract_random_part(text)
         text = f"""<|user|>
-    {inst}{text}<|end|>
-    <|assistant|>"""
+{inst}{text}<|end|>
+<|assistant|>"""
 
         if "url" not in record:
             assert db_name != "", "url not found. you should set db_name"
             record["url"] = db_name
-            records.append(
-                {"original_text": text,
-                 "mode": mode,
-                 "url": record["url"]
-                 }
-            )
+        records.append(
+            {"original_text": text,
+                "mode": mode,
+                "url": record["url"]
+             }
+        )
         cnt += 1
         if cnt > n_records:
             break
