@@ -1,4 +1,3 @@
-# %%
 import pandas as pd
 import pyarrow.parquet as pq
 import pyarrow as pa
@@ -12,12 +11,12 @@ jsonl_list.sort()
 logging.set_verbosity_debug()
 hf = HfApi()
 
-chunk_size = 1000000  # 100万件ごとに分割
+chunk_size = 5000000  # 50万件ごとに分割
 
 # 一時的にデータを保持するためのリスト
 temp_data = []
+i = 0  # チャンクのカウンター
 
-i=0
 for path in jsonl_list:
     filename = path.split("/")[-1]
     dataset_name = filename.split(".")[0]
@@ -46,6 +45,9 @@ for path in jsonl_list:
                        repo_id="kanhatakeyama/SyntheticText",
                        repo_type="dataset")
         i += 1
+    
+    # 処理したデータをtemp_dataから削除
+    temp_data = [combined_df]
 
 # 残りのデータもParquetに変換してアップロード
 if len(combined_df) > 0:
@@ -57,9 +59,3 @@ if len(combined_df) > 0:
                    path_in_repo=f"data/{dataset_name}_part{i + 1}.parquet",
                    repo_id="kanhatakeyama/SyntheticText",
                    repo_type="dataset")
-
-
-# %%
-
-
-
