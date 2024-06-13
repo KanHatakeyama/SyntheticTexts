@@ -9,7 +9,7 @@ from src.generator import inst_dict, prepare_records
 import random
 
 # バッチサイズ
-n_records = 5
+n_records = 300
 
 dir_name="out_data_wiki_translate"
 os.system(f"mkdir -p {dir_name}")
