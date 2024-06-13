@@ -52,12 +52,14 @@ def prepare_records(ds, mode_list,
                     random_extract=True,
                     n_records=300,
                     db_name="",
+                    inst_dict=inst_dict,
                     ):
     ds = ds.shuffle()
 
     records = []
     cnt = 0
     for record in ds:
+        #print(record)
         mode = random.choice(mode_list)
         inst = inst_dict[mode]
 

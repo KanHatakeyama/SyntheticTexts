@@ -4,9 +4,67 @@ from datasets import load_dataset, concatenate_datasets
 from datetime import datetime
 import json
 import os
-from src.generator import inst_dict, prepare_records
+from src.generator import prepare_records
 import time
 import random
+
+inst_dict = {
+    "textbook": """次のデータをもとに､論理的かつ教科書調の丁寧な日本語の文章を作成しなさい｡
+-事実を正確に守り､推測出来ない事項については記述しないこと｡
+-元の文章の流用は避け､表現や段落分け､文体などを必ず変更すること｡
+-必ず日本語で出力すること
+-[問題文]を出力
+-[考え方]を出力
+-[答え]を出力
+-[詳細な解説]を出力
+
+#データ
+""",
+    "conversation": """次のデータをもとに､論理的な日本語の会話文を作成しなさい｡
+-事実を正確に守り､推測出来ない事項については記述しないこと｡
+-元の文章の流用は避け､表現や段落分け､文体などを必ず変更すること｡
+-必ず日本語で出力すること
+
+#データ
+""",
+    "logical": """次のデータをもとに､論理的な文章を作成しなさい｡
+-事実を正確に守り､推測出来ない事項については記述しないこと｡
+-元の文章の流用は避け､表現や段落分け､文体などを必ず変更すること｡
+-必ず日本語で出力すること
+-[問題文]を出力
+-[考え方]を出力
+-[答え]を出力
+-[詳細な解説]を出力
+
+#データ 
+""",
+    "reasoning": """次のデータをもとに､論理推定を行う文章を作成しなさい｡
+-事実を正確に守り､推測出来ない事項については記述しないこと｡
+-元の文章の流用は避け､表現や段落分け､文体などを必ず変更すること｡
+-必ず日本語で出力すること
+-[問題文]を出力
+-[考え方]を出力
+-[答え]を出力
+-[詳細な解説]を出力
+
+#データ
+""",
+    "QandA": """次のデータをもとに､Q&Aを作成しなさい｡
+-事実を正確に守り､推測出来ない事項については記述しないこと｡
+-元の文章の流用は避け､表現や段落分け､文体などを必ず変更すること｡
+-必ず日本語で出力すること
+-[問題文]を出力
+-[考え方]を出力
+-[答え]を出力
+-[詳細な解説]を出力
+
+#データ
+""",
+
+}
+
+
+dir_name="out_data_openmath"
 
 wait_time = random.randint(1, 60)
 #time.sleep(wait_time)
@@ -17,10 +75,10 @@ wait_time = random.randint(1, 60)
 n_records = 30
 
 
-os.system("mkdir -p out_data")
+os.system(f"mkdir -p {dir_name}")
 current_time_no_symbols = datetime.now().strftime(
     "%Y-%m-%d %H:%M:%S").replace("-", "").replace(":", "").replace(" ", "")
-out_path = f"out_data/model_{current_time_no_symbols}_openmath.jsonl"
+out_path = f"{dir_name}/model_{current_time_no_symbols}_openmath.jsonl"
 
 ds_list = [
     # load_dataset("hpprc/jawiki-wiktionary", split="train"),
@@ -35,7 +93,6 @@ ds_list_filtered = [
 
 # データセットを結合
 ds = concatenate_datasets(ds_list_filtered)
-#ds["text"]="問題. "+ds["question_ja"]+"\n 解答."+ds["generated_solution_ja"]
 
 ds=ds.filter(lambda x: x["question_ja"] is not None and x["generated_solution_ja"] is not None)
 
@@ -46,19 +103,23 @@ def add_text_column(example):
     return {"text": "問題. " + question_text + "\n 解答." + solution_text}
 ds = ds.map(add_text_column)
 # ds = concatenate_datasets(ds_list)
+
+# %%
+try:
+    ds = ds.shuffle()
+except Exception as e:
+    print(e)
+
+for record in ds:
+    print(record)
+    break
+
+# %%
 model_name = "microsoft/Phi-3-medium-128k-instruct"
 llm = LLM(model=model_name, trust_remote_code=True,
           max_model_len=20000
 )
 
-
-# %%
-try:
-    ds = ds.shuffle()
-except:
-    pass
-
-# %%
 
 
 mode_list = list(inst_dict.keys())
@@ -70,7 +131,8 @@ print(len(ds), " records")
 # %%
 while True:
     records = prepare_records(
-        ds, mode_list, n_records=n_records, random_extract=True,db_name="kunishou/OpenMathInstruct-1-1.8m-ja")
+        ds, mode_list, n_records=n_records, random_extract=True,db_name="kunishou/OpenMathInstruct-1-1.8m-ja",
+        inst_dict=inst_dict)
     
     prompts = [record["original_text"] for record in records]
     outputs = llm.generate(
